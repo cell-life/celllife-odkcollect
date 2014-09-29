@@ -460,6 +460,7 @@ public class InstanceUploaderTask extends AsyncTask<Long, Integer, InstanceUploa
         outcome.mResults.put("reference", reference);
         outcome.mResults.put(id, Collect.getInstance().getString(R.string.success));
         cv.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_SUBMITTED);
+        cv.put(InstanceColumns.REFERENCE, reference);
         Collect.getInstance().getContentResolver().update(toUpdate, cv, null, null);
         return true;
     }

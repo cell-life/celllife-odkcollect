@@ -230,23 +230,14 @@ public class InstanceUploaderActivity extends Activity implements InstanceUpload
         StringBuilder message = new StringBuilder();
         {
             Cursor results = null;
-            String reference = null;
             try {
                 results = getContentResolver().query(InstanceColumns.CONTENT_URI, null, selection.toString(),
                         selectionArgs, null);
-                try {
-                    HashMap<String, String> uploadResults = mInstanceUploaderTask.get().mResults;
-                    reference = uploadResults.get("reference");
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
                 if (results.getCount() > 0) {
                     results.moveToPosition(-1);
                     while (results.moveToNext()) {
                         String name = results.getString(results.getColumnIndex(InstanceColumns.DISPLAY_NAME));
+                        String reference = results.getString(results.getColumnIndex(InstanceColumns.REFERENCE));
                         String id = results.getString(results.getColumnIndex(InstanceColumns._ID));
                         message.append(name + "- " + "(" + reference + ")" + result.get(id) + "\n\n");
                     }
