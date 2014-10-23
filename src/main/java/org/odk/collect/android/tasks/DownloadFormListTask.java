@@ -25,30 +25,20 @@ import org.odk.collect.android.logic.FormDetails;
 import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.utilities.DocumentFetchResult;
 import org.odk.collect.android.utilities.WebUtils;
-import org.w3c.dom.Attr;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmlpull.v1.XmlSerializer;
-
-import com.google.android.gms.common.data.f;
 
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.HashMap;
 
 /**
- * Background task for downloading forms from urls or a formlist from a url. We overload this task a bit so that we
- * don't have to keep track of two separate downloading tasks and it simplifies interfaces. If LIST_URL is passed to
- * doInBackground(), we fetch a form list. If a hashmap containing form/url pairs is passed, we download those forms.
- * 
+ * Background task for downloading forms from urls or a formlist from a url. We overload this task a
+ * bit so that we don't have to keep track of two separate downloading tasks and it simplifies
+ * interfaces. If LIST_URL is passed to doInBackground(), we fetch a form list. If a hashmap
+ * containing form/url pairs is passed, we download those forms.
+ *
  * @author carlhartung
  */
 public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String, FormDetails>> {
@@ -60,24 +50,28 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
 
     private FormListDownloaderListener mStateListener;
 
-    private static final String NAMESPACE_OPENROSA_ORG_XFORMS_XFORMS_LIST = "http://openrosa.org/xforms/xformsList";
+    private static final String NAMESPACE_OPENROSA_ORG_XFORMS_XFORMS_LIST =
+        "http://openrosa.org/xforms/xformsList";
+
 
     private boolean isXformsListNamespacedElement(Element e) {
         return e.getNamespace().equalsIgnoreCase(NAMESPACE_OPENROSA_ORG_XFORMS_XFORMS_LIST);
     }
 
+
     @Override
     protected HashMap<String, FormDetails> doInBackground(Void... values) {
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(Collect.getInstance()
-                .getBaseContext());
-        String downloadListUrl = settings.getString(PreferencesActivity.KEY_SERVER_URL, Collect.getInstance()
-                .getString(R.string.default_server_url));
+        SharedPreferences settings =
+            PreferenceManager.getDefaultSharedPreferences(Collect.getInstance().getBaseContext());
+        String downloadListUrl =
+            settings.getString(PreferencesActivity.KEY_SERVER_URL,
+                Collect.getInstance().getString(R.string.default_server_url));
         // NOTE: /formlist must not be translated! It is the well-known path on the server.
         String formListUrl = Collect.getInstance().getApplicationContext().getString(R.string.default_odk_formlist);
         String downloadPath = settings.getString(PreferencesActivity.KEY_FORMLIST_URL, formListUrl);
         downloadListUrl += downloadPath;
 
-        Collect.getInstance().getActivityLogger().logAction(this, formListUrl, downloadListUrl);
+    	Collect.getInstance().getActivityLogger().logAction(this, formListUrl, downloadListUrl);
 
         // We populate this with available forms from the specified server.
         // <formname, details>
@@ -87,7 +81,8 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
         HttpContext localContext = Collect.getInstance().getHttpContext();
         HttpClient httpclient = WebUtils.createHttpClient(WebUtils.CONNECTION_TIMEOUT);
 
-        DocumentFetchResult result = WebUtils.getXmlDocument(downloadListUrl, localContext, httpclient);
+        DocumentFetchResult result =
+            WebUtils.getXmlDocument(downloadListUrl, localContext, httpclient);
 
         // If we can't get the document, return the error, cancel the task
         if (result.errorMessage != null) {
@@ -101,14 +96,14 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
 
         if (result.isOpenRosaResponse) {
             // Attempt OpenRosa 1.0 parsing
-
             Element xformsElement = result.doc.getRootElement();
             if (!xformsElement.getName().equals("xforms")) {
                 String error = "root element is not <xforms> : " + xformsElement.getName();
                 Log.e(t, "Parsing OpenRosa reply -- " + error);
                 formList.put(
-                        DL_ERROR_MSG,
-                        new FormDetails(Collect.getInstance().getString(R.string.parse_openrosa_formlist_failed, error)));
+                    DL_ERROR_MSG,
+                    new FormDetails(Collect.getInstance().getString(
+                        R.string.parse_openrosa_formlist_failed, error)));
                 return formList;
             }
             String namespace = xformsElement.getNamespace();
@@ -116,8 +111,9 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
                 String error = "root element namespace is incorrect:" + namespace;
                 Log.e(t, "Parsing OpenRosa reply -- " + error);
                 formList.put(
-                        DL_ERROR_MSG,
-                        new FormDetails(Collect.getInstance().getString(R.string.parse_openrosa_formlist_failed, error)));
+                    DL_ERROR_MSG,
+                    new FormDetails(Collect.getInstance().getString(
+                        R.string.parse_openrosa_formlist_failed, error)));
                 return formList;
             }
             int nElements = xformsElement.getChildCount();
@@ -158,7 +154,6 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
                         continue;
                     }
                     String tag = child.getName();
-                    Log.i(t, "tag1: " + tag);
                     if (tag.equals("formID")) {
                         formId = XFormParser.getXMLText(child, true);
                         if (formId != null && formId.length() == 0) {
@@ -172,7 +167,7 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
                     } else if (tag.equals("version")) {
                         version = XFormParser.getXMLText(child, true);
                         if (version != null && version.length() == 0) {
-                            version = null;
+                        	version = null;
                         }
                     } else if (tag.equals("majorMinorVersion")) {
                         majorMinorVersion = XFormParser.getXMLText(child, true);
@@ -197,46 +192,22 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
                     }
                 }
                 if (formId == null || downloadUrl == null || formName == null) {
-                    String error = "Forms list entry " + Integer.toString(i)
-                            + " is missing one or more tags: formId, name, or downloadUrl";
+                    String error =
+                        "Forms list entry " + Integer.toString(i)
+                                + " is missing one or more tags: formId, name, or downloadUrl";
                     Log.e(t, "Parsing OpenRosa reply -- " + error);
                     formList.clear();
                     formList.put(
-                            DL_ERROR_MSG,
-                            new FormDetails(Collect.getInstance().getString(R.string.parse_openrosa_formlist_failed,
-                                    error)));
+                        DL_ERROR_MSG,
+                        new FormDetails(Collect.getInstance().getString(
+                            R.string.parse_openrosa_formlist_failed, error)));
                     return formList;
                 }
-                formList.put(formId, new FormDetails(formName, downloadUrl, manifestUrl, formId,
-                        (version != null) ? version : majorMinorVersion));
-                Log.i(t, "FormInfo: " + formList);
+                formList.put(formId, new FormDetails(formName, downloadUrl, manifestUrl, formId, (version != null) ? version : majorMinorVersion));
             }
         } else {
             // Aggregate 0.9.x mode...
             // populate HashMap with form names and urls
-            XmlPullParserFactory factory = null;
-            try {
-                factory = XmlPullParserFactory
-                        .newInstance(System.getProperty(XmlPullParserFactory.PROPERTY_NAME), null);
-            } catch (XmlPullParserException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-            try {
-                XmlSerializer serializer = factory.newSerializer();
-                serializer.setOutput(new PrintWriter(System.out));
-                result.doc.write(serializer);
-                Writer writer = new StringWriter();
-                String data = writer.toString();
-                Log.i(t, "data:" + data);
-
-            } catch (XmlPullParserException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
             Element formsElement = result.doc.getRootElement();
             int formsCount = formsElement.getChildCount();
             String formId = null;
@@ -247,18 +218,14 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
                 }
                 Element child = formsElement.getElement(i);
                 String tag = child.getName();
-                Log.i(t, "tag: " + tag);
                 if (tag.equals("formID")) {
                     formId = XFormParser.getXMLText(child, true);
-                    Log.i(t, "FormID: " + formId);
-                    if (formId.isEmpty() && formId.length() == 0) {
+                    if (formId != null && formId.length() == 0) {
                         formId = null;
                     }
                 }
-
                 if (tag.equalsIgnoreCase("form")) {
                     String formName = XFormParser.getXMLText(child, true);
-                    Log.i(t, "name: " + formName);
                     if (formName != null && formName.length() == 0) {
                         formName = null;
                     }
@@ -268,25 +235,26 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
                         downloadUrl = null;
                     }
                     if (downloadUrl == null || formName == null) {
-                        String error = "Forms list entry " + Integer.toString(i)
-                                + " is missing form name or url attribute";
+                        String error =
+                            "Forms list entry " + Integer.toString(i)
+                                    + " is missing form name or url attribute";
                         Log.e(t, "Parsing OpenRosa reply -- " + error);
                         formList.clear();
                         formList.put(
-                                DL_ERROR_MSG,
-                                new FormDetails(Collect.getInstance().getString(R.string.parse_legacy_formlist_failed,
-                                        error)));
+                            DL_ERROR_MSG,
+                            new FormDetails(Collect.getInstance().getString(
+                                R.string.parse_legacy_formlist_failed, error)));
                         return formList;
                     }
                     formList.put(formName, new FormDetails(formName, downloadUrl, null, formId, null));
-                    Log.i(t, "FormNameAndUrl:" + formName + downloadUrl + formId);
+
                     formId = null;
                 }
-
             }
         }
         return formList;
     }
+
 
     @Override
     protected void onPostExecute(HashMap<String, FormDetails> value) {
@@ -296,6 +264,7 @@ public class DownloadFormListTask extends AsyncTask<Void, String, HashMap<String
             }
         }
     }
+
 
     public void setDownloaderListener(FormListDownloaderListener sl) {
         synchronized (this) {
