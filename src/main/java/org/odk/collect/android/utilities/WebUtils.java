@@ -17,6 +17,7 @@ package org.odk.collect.android.utilities;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
 import org.kxml2.io.KXmlParser;
 import org.kxml2.kdom.Document;
@@ -481,4 +483,29 @@ public final class WebUtils {
 			httpConnectionManager = null;
 		}
 	}
+
+    /**
+     * Retrieve a session reference from the response inputstream. The reference is returned from the oXd server and
+     * is the form data identifier.
+     *
+     * @param response HttpResponse
+     * @return String containing the reference sent by the server or null if it can't be read
+     */
+    public static String readReferenceFromStream(HttpResponse response) {
+        String reference = null;
+        try {
+            InputStream in = response.getEntity().getContent();
+            try {
+                StringWriter writer = new StringWriter();
+                IOUtils.copy(in, writer, "UTF-8");
+                reference = writer.toString();
+                Log.i(t, "reference:" + reference);
+            } finally {
+                in.close();
+            }
+        } catch (IOException e) {
+            Log.e(t, "Error while reading reference", e);
+        }
+        return reference;
+    }
 }

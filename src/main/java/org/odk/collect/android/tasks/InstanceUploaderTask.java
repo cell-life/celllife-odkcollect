@@ -277,6 +277,9 @@ public class InstanceUploaderTask extends AsyncTask<Long, Integer, InstanceUploa
             Collect.getInstance().getContentResolver().update(toUpdate, cv, null, null);
             return true;
         }
+        
+        // the form data reference retrieved from the oXd server
+        String reference = null;
 
         // find all files in parent directory
         File[] allFiles = instanceFile.getParentFile().listFiles();
@@ -427,9 +430,11 @@ public class InstanceUploaderTask extends AsyncTask<Long, Integer, InstanceUploa
                 Log.i(t, "Issuing POST request for " + id + " to: " + u.toString());
                 response = httpclient.execute(httppost, localContext);
                 int responseCode = response.getStatusLine().getStatusCode();
-                WebUtils.discardEntityBytes(response);
-
                 Log.i(t, "Response code:" + responseCode);
+                
+                // read the form data reference from the stream
+                reference = WebUtils.readReferenceFromStream(response);
+                
                 // verify that the response was a 201 or 202.
                 // If it wasn't, the submission has failed.
                 if (responseCode != HttpStatus.SC_CREATED && responseCode != HttpStatus.SC_ACCEPTED) {
@@ -464,6 +469,7 @@ public class InstanceUploaderTask extends AsyncTask<Long, Integer, InstanceUploa
         }
 
         // if it got here, it must have worked
+        outcome.mResults.put("reference", reference);
         outcome.mResults.put(id, Collect.getInstance().getString(R.string.success));
         cv.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_SUBMITTED);
         Collect.getInstance().getContentResolver().update(toUpdate, cv, null, null);

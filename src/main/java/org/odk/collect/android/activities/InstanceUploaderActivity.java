@@ -229,16 +229,24 @@ public class InstanceUploaderActivity extends Activity implements InstanceUpload
         StringBuilder message = new StringBuilder();
         {
         	Cursor results = null;
+        	String reference = getString(R.string.unknown);
         	try {
                 results = getContentResolver().query(InstanceColumns.CONTENT_URI,
                 		null, selection.toString(), selectionArgs, null);
+                HashMap<String, String> uploadResults;
+                try {
+                    uploadResults = mInstanceUploaderTask.get().mResults;
+                    reference = uploadResults.get("reference");
+                } catch (Exception e) {
+                    Log.e(t, "Could not get uploadResults and find the form session reference. Error: "+e.getMessage(), e);
+                }
                 if (results.getCount() > 0) {
                     results.moveToPosition(-1);
                     while (results.moveToNext()) {
                         String name =
                             results.getString(results.getColumnIndex(InstanceColumns.DISPLAY_NAME));
                         String id = results.getString(results.getColumnIndex(InstanceColumns._ID));
-                        message.append(name + " - " + result.get(id) + "\n\n");
+                        message.append(name + " (" + reference + ") " + result.get(id) + "\n\n");
                     }
                 } else {
                     message.append(getString(R.string.no_forms_uploaded));
