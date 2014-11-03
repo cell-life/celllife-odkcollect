@@ -15,9 +15,12 @@
 package org.odk.collect.android.activities;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.odk.collect.android.R;
+import org.odk.collect.android.adapters.TwoItemChoiceAdapter;
 import org.odk.collect.android.application.Collect;
+import org.odk.collect.android.logic.InstanceProvider;
 import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -33,6 +36,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,7 +44,6 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 /**
@@ -53,6 +56,8 @@ import android.widget.Toast;
 
 public class InstanceUploaderList extends ListActivity implements
 		OnLongClickListener {
+    
+    private final static String t = "InstanceUploaderList";
 
 	private static final String BUNDLE_SELECTED_ITEMS_KEY = "selected_items";
 	private static final String BUNDLE_TOGGLED_KEY = "toggled";
@@ -65,25 +70,29 @@ public class InstanceUploaderList extends ListActivity implements
 	private Button mToggleButton;
 
 	private boolean mShowUnsent = true;
-	private SimpleCursorAdapter mInstances;
+	private TwoItemChoiceAdapter mInstances;
 	private ArrayList<Long> mSelected = new ArrayList<Long>();
 	private boolean mRestored = false;
 	private boolean mToggled = false;
 
 	public Cursor getUnsentCursor() {
 		// get all complete or failed submission instances
+	    String[] columns = new String[] { InstanceColumns.DISPLAY_NAME, InstanceColumns.REFERENCE,
+	                InstanceColumns.DISPLAY_SUBTEXT, InstanceColumns._ID };
 		String selection = InstanceColumns.STATUS + "=? or "
 				+ InstanceColumns.STATUS + "=?";
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_COMPLETE,
 				InstanceProviderAPI.STATUS_SUBMISSION_FAILED };
 		String sortOrder = InstanceColumns.DISPLAY_NAME + " ASC";
-		Cursor c = managedQuery(InstanceColumns.CONTENT_URI, null, selection,
-				selectionArgs, sortOrder);
+        Cursor c = getContentResolver()
+                .query(InstanceColumns.CONTENT_URI, columns, selection, selectionArgs, sortOrder);
 		return c;
 	}
 
 	public Cursor getAllCursor() {
 		// get all complete or failed submission instances
+	    String[] columns = new String[] { InstanceColumns.DISPLAY_NAME, InstanceColumns.REFERENCE,
+                InstanceColumns.DISPLAY_SUBTEXT, InstanceColumns._ID };
 		String selection = InstanceColumns.STATUS + "=? or "
 				+ InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS
 				+ "=?";
@@ -91,10 +100,23 @@ public class InstanceUploaderList extends ListActivity implements
 				InstanceProviderAPI.STATUS_SUBMISSION_FAILED,
 				InstanceProviderAPI.STATUS_SUBMITTED };
 		String sortOrder = InstanceColumns.DISPLAY_NAME + " ASC";
-		Cursor c = managedQuery(InstanceColumns.CONTENT_URI, null, selection,
-				selectionArgs, sortOrder);
+        Cursor c = getContentResolver()
+                .query(InstanceColumns.CONTENT_URI, columns, selection, selectionArgs, sortOrder);
 		return c;
 	}
+
+    public Cursor getSentCursor() {
+        // get all complete or failed submission instances
+        String[] columns = new String[] { InstanceColumns.DISPLAY_NAME, InstanceColumns.REFERENCE,
+                InstanceColumns.DISPLAY_SUBTEXT, InstanceColumns._ID };
+        String selection = InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? or "
+                + InstanceColumns.STATUS + "=?";
+        String selectionArgs[] = { InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED };
+        String sortOrder = InstanceColumns.DISPLAY_NAME + " ASC";
+        Cursor c = getContentResolver()
+                .query(InstanceColumns.CONTENT_URI, columns, selection, selectionArgs, sortOrder);
+        return c;
+    }
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -129,11 +151,18 @@ public class InstanceUploaderList extends ListActivity implements
 									Integer.toString(mSelected.size()));
 
 					if (mSelected.size() > 0) {
-						// items selected
+						// upload items selected
 						uploadSelectedFiles();
-						mToggled = false;
+						// refresh the data in the list
+						if (mShowUnsent) {
+						    showUnsent();
+						} else {
+						    showAll();
+						}
+						// reset settings and clear list selections
 						mSelected.clear();
 						InstanceUploaderList.this.getListView().clearChoices();
+						mToggled = false;
 						mUploadButton.setEnabled(false);
 					} else {
 						// no items selected
@@ -172,15 +201,11 @@ public class InstanceUploaderList extends ListActivity implements
 		});
 		mToggleButton.setOnLongClickListener(this);
 
-		Cursor c = mShowUnsent ? getUnsentCursor() : getAllCursor();
+        ArrayList<InstanceProvider> list = getUnsentData();
 
-		String[] data = new String[] { InstanceColumns.DISPLAY_NAME,
-				InstanceColumns.DISPLAY_SUBTEXT };
-		int[] view = new int[] { R.id.text1, R.id.text2 };
-
-		// render total instance view
-		mInstances = new SimpleCursorAdapter(this,
-				R.layout.two_item_multiple_choice, c, data, view);
+        // render total instance view
+        mInstances = new TwoItemChoiceAdapter(InstanceUploaderList.this,
+                R.layout.instance_uploader_list, list);
 
 		setListAdapter(mInstances);
 		getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
@@ -208,6 +233,48 @@ public class InstanceUploaderList extends ListActivity implements
 			mRestored = false;
 		}
 	}
+
+    private ArrayList<InstanceProvider> getAllData() {
+        ArrayList<InstanceProvider> formList = new ArrayList<InstanceProvider>();
+        Cursor cursor = getAllCursor();
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                InstanceProvider form = new InstanceProvider();
+                form.setTitle(cursor.getString(0));
+                form.setReference(cursor.getString(1));
+                form.setSubtext(cursor.getString(2));
+                form.setId(cursor.getLong(3));
+                // Adding form to list
+                formList.add(form);
+            } while (cursor.moveToNext());
+        }
+
+        // return form list
+        return formList;
+    }
+
+    private ArrayList<InstanceProvider> getUnsentData() {
+        ArrayList<InstanceProvider> formList = new ArrayList<InstanceProvider>();
+        Cursor cursor = getUnsentCursor();
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                InstanceProvider form = new InstanceProvider();
+                form.setTitle(cursor.getString(0));
+                form.setReference(cursor.getString(1));
+                form.setSubtext(cursor.getString(2));
+                form.setId(cursor.getLong(3));
+                // Adding form to list
+                formList.add(form);
+            } while (cursor.moveToNext());
+        }
+
+        // return form list
+        return formList;
+    }
 
 	@Override
 	protected void onStart() {
@@ -276,9 +343,9 @@ public class InstanceUploaderList extends ListActivity implements
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 
-		// get row id from db
-		Cursor c = (Cursor) getListAdapter().getItem(position);
-		long k = c.getLong(c.getColumnIndex(InstanceColumns._ID));
+        // get row id
+        InstanceProvider instanceProvider = (InstanceProvider) getListAdapter().getItem(position);
+        long k = instanceProvider.getId();
 
 		Collect.getInstance().getActivityLogger()
 				.logAction(this, "onListItemClick", Long.toString(k));
@@ -339,33 +406,23 @@ public class InstanceUploaderList extends ListActivity implements
 	}
 
 	private void showUnsent() {
+	    Log.d(t, "Showing unsent forms in the list");
 		mShowUnsent = true;
-		Cursor c = mShowUnsent ? getUnsentCursor() : getAllCursor();
-		Cursor old = mInstances.getCursor();
-		try {
-			mInstances.changeCursor(c);
-		} finally {
-			if (old != null) {
-				old.close();
-				this.stopManagingCursor(old);
-			}
-		}
-		getListView().invalidate();
+		List<InstanceProvider> list = getUnsentData();
+        mInstances.clear();
+        mInstances.addAll(list);
+        mInstances.notifyDataSetChanged();
+        mInstances.notifyDataSetInvalidated();
 	}
 
 	private void showAll() {
-		mShowUnsent = false;
-		Cursor c = mShowUnsent ? getUnsentCursor() : getAllCursor();
-		Cursor old = mInstances.getCursor();
-		try {
-			mInstances.changeCursor(c);
-		} finally {
-			if (old != null) {
-				old.close();
-				this.stopManagingCursor(old);
-			}
-		}
-		getListView().invalidate();
+	    Log.d(t, "Showing all (sent and unsent) forms in the list");
+        mShowUnsent = false;
+        List<InstanceProvider> list = getAllData();
+        mInstances.clear();
+        mInstances.addAll(list);
+        mInstances.notifyDataSetChanged();
+        mInstances.notifyDataSetInvalidated();
 	}
 
 	@Override

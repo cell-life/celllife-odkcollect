@@ -17,8 +17,10 @@ package org.odk.collect.android.activities;
 import java.util.ArrayList;
 
 import org.odk.collect.android.R;
+import org.odk.collect.android.adapters.TwoItemChoiceAdapter;
 import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.listeners.DeleteInstancesListener;
+import org.odk.collect.android.logic.InstanceProvider;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.odk.collect.android.tasks.DeleteInstancesTask;
 
@@ -29,11 +31,11 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 import android.widget.Toast;
 
 /**
@@ -50,7 +52,7 @@ public class DataManagerList extends ListActivity implements
 	private Button mDeleteButton;
 	private Button mToggleButton;
 
-	private SimpleCursorAdapter mInstances;
+	private TwoItemChoiceAdapter mInstances;
 	private ArrayList<Long> mSelected = new ArrayList<Long>();
 
 	DeleteInstancesTask mDeleteInstancesTask = null;
@@ -103,16 +105,10 @@ public class DataManagerList extends ListActivity implements
                 }
             }
         });
+        
+        ArrayList<InstanceProvider> list = getAllData();
+        mInstances = new TwoItemChoiceAdapter(DataManagerList.this, R.layout.data_manage_list, list);
 
-		Cursor c = managedQuery(InstanceColumns.CONTENT_URI, null, null, null,
-				InstanceColumns.DISPLAY_NAME + " ASC");
-
-		String[] data = new String[] { InstanceColumns.DISPLAY_NAME,
-				InstanceColumns.DISPLAY_SUBTEXT };
-		int[] view = new int[] { R.id.text1, R.id.text2 };
-
-		mInstances = new SimpleCursorAdapter(this,
-				R.layout.two_item_multiple_choice, c, data, view);
 		setListAdapter(mInstances);
 		getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 		getListView().setItemsCanFocus(false);
@@ -120,6 +116,38 @@ public class DataManagerList extends ListActivity implements
 
 		mDeleteInstancesTask = (DeleteInstancesTask) getLastNonConfigurationInstance();
 	}
+
+    public ArrayList<InstanceProvider> getAllData() {
+        ArrayList<InstanceProvider> formList = new ArrayList<InstanceProvider>();
+        Cursor cursor = getAllCursor();
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            do {
+                InstanceProvider form = new InstanceProvider();
+                form.setTitle(cursor.getString(0));
+                form.setReference(cursor.getString(1));
+                form.setSubtext(cursor.getString(2));
+                form.setId(cursor.getLong(3));
+                // Adding form to list
+                formList.add(form);
+            } while (cursor.moveToNext());
+        }
+
+        // return form list
+        return formList;
+    }
+
+    public Cursor getAllCursor() {
+        // get all complete or failed submission instances
+        String[] columns = new String[] { InstanceColumns.DISPLAY_NAME, InstanceColumns.REFERENCE,
+                InstanceColumns.DISPLAY_SUBTEXT, InstanceColumns._ID };
+
+        Cursor c = getContentResolver().query(InstanceColumns.CONTENT_URI, columns, null, null,
+                InstanceColumns.DISPLAY_NAME + " ASC");
+
+        return c;
+    }
 
     @Override
     protected void onStart() {
@@ -237,9 +265,9 @@ public class DataManagerList extends ListActivity implements
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
 
-		// get row id from db
-		Cursor c = (Cursor) getListAdapter().getItem(position);
-		long k = c.getLong(c.getColumnIndex(InstanceColumns._ID));
+		// get row id 
+        InstanceProvider instanceProvider = (InstanceProvider) getListAdapter().getItem(position);
+        long k = instanceProvider.getId();
 
 		// add/remove from selected list
 		if (mSelected.contains(k))
@@ -273,10 +301,18 @@ public class DataManagerList extends ListActivity implements
 		}
 		mDeleteInstancesTask = null;
 		mSelected.clear();
+        SparseBooleanArray checked = getListView().getCheckedItemPositions();
+        mInstances = (TwoItemChoiceAdapter) getListView().getAdapter();
+        ArrayList<InstanceProvider> removeFormArray = new ArrayList<InstanceProvider>();
+        for (int i = 0; i < (mInstances.getCount()); i++) {
+            if (checked.get(i)) {
+                removeFormArray.add(mInstances.getItem(i)); // add form to be removed to the removeFormAray
+            }
+        }
+        for (int j = 0; j < removeFormArray.size(); j++) {
+            mInstances.remove(removeFormArray.get(j)); // removes selected from the adapter
+        }
 		getListView().clearChoices(); // doesn't unset the checkboxes
-		for ( int i = 0 ; i < getListView().getCount() ; ++i ) {
-			getListView().setItemChecked(i, false);
-		}
 		mDeleteButton.setEnabled(false);
 	}
 }

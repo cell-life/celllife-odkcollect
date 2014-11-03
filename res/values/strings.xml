@@ -296,4 +296,6 @@
     <string name="high_resolution_summary">Enable high-resolution video recordings</string>
     <string name="high_resolution">Enable hi-res video</string>
     <string name="unknown">unknown</string>
+    <string name="no_reference">-</string>
+    <string name ="reference">Reference</string>
 </resources>
