@@ -20,7 +20,7 @@ import org.odk.collect.android.R;
 import org.odk.collect.android.adapters.TwoItemChoiceAdapter;
 import org.odk.collect.android.application.Collect;
 import org.odk.collect.android.listeners.DeleteInstancesListener;
-import org.odk.collect.android.logic.InstanceProvider;
+import org.odk.collect.android.logic.InstanceProviderBean;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.odk.collect.android.tasks.DeleteInstancesTask;
 
@@ -106,7 +106,7 @@ public class DataManagerList extends ListActivity implements
             }
         });
         
-        ArrayList<InstanceProvider> list = getAllData();
+        ArrayList<InstanceProviderBean> list = getAllData();
         mInstances = new TwoItemChoiceAdapter(DataManagerList.this, R.layout.data_manage_list, list);
 
 		setListAdapter(mInstances);
@@ -117,14 +117,14 @@ public class DataManagerList extends ListActivity implements
 		mDeleteInstancesTask = (DeleteInstancesTask) getLastNonConfigurationInstance();
 	}
 
-    public ArrayList<InstanceProvider> getAllData() {
-        ArrayList<InstanceProvider> formList = new ArrayList<InstanceProvider>();
+    public ArrayList<InstanceProviderBean> getAllData() {
+        ArrayList<InstanceProviderBean> formList = new ArrayList<InstanceProviderBean>();
         Cursor cursor = getAllCursor();
 
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                InstanceProvider form = new InstanceProvider();
+                InstanceProviderBean form = new InstanceProviderBean();
                 form.setTitle(cursor.getString(0));
                 form.setReference(cursor.getString(1));
                 form.setSubtext(cursor.getString(2));
@@ -266,7 +266,7 @@ public class DataManagerList extends ListActivity implements
 		super.onListItemClick(l, v, position, id);
 
 		// get row id 
-        InstanceProvider instanceProvider = (InstanceProvider) getListAdapter().getItem(position);
+        InstanceProviderBean instanceProvider = (InstanceProviderBean) getListAdapter().getItem(position);
         long k = instanceProvider.getId();
 
 		// add/remove from selected list
@@ -303,7 +303,7 @@ public class DataManagerList extends ListActivity implements
 		mSelected.clear();
         SparseBooleanArray checked = getListView().getCheckedItemPositions();
         mInstances = (TwoItemChoiceAdapter) getListView().getAdapter();
-        ArrayList<InstanceProvider> removeFormArray = new ArrayList<InstanceProvider>();
+        ArrayList<InstanceProviderBean> removeFormArray = new ArrayList<InstanceProviderBean>();
         for (int i = 0; i < (mInstances.getCount()); i++) {
             if (checked.get(i)) {
                 removeFormArray.add(mInstances.getItem(i)); // add form to be removed to the removeFormAray

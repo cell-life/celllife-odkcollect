@@ -3,7 +3,7 @@ package org.odk.collect.android.adapters;
 import java.util.ArrayList;
 
 import org.odk.collect.android.R;
-import org.odk.collect.android.logic.InstanceProvider;
+import org.odk.collect.android.logic.InstanceProviderBean;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -12,10 +12,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-public class TwoItemChoiceAdapter extends ArrayAdapter<InstanceProvider> {
-    private ArrayList<InstanceProvider> values;
+public class TwoItemChoiceAdapter extends ArrayAdapter<InstanceProviderBean> {
+    private ArrayList<InstanceProviderBean> values;
 
-    public TwoItemChoiceAdapter(Context context, int resource, ArrayList<InstanceProvider> values) {
+    public TwoItemChoiceAdapter(Context context, int resource, ArrayList<InstanceProviderBean> values) {
         super(context, resource, values);
         this.values = values;
     }
@@ -32,7 +32,7 @@ public class TwoItemChoiceAdapter extends ArrayAdapter<InstanceProvider> {
         TextView textViewString = (TextView) view.findViewById(R.id.text2);
         TextView textViewRefNum = (TextView) view.findViewById(R.id.text3);
 
-        InstanceProvider in = values.get(position);
+        InstanceProviderBean in = values.get(position);
 
         textViewTitle.setText(in.getTitle());
         if (in.getReference() != null && !in.getReference().trim().equals("")) {

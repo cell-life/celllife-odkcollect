@@ -20,7 +20,7 @@ import java.util.List;
 import org.odk.collect.android.R;
 import org.odk.collect.android.adapters.TwoItemChoiceAdapter;
 import org.odk.collect.android.application.Collect;
-import org.odk.collect.android.logic.InstanceProvider;
+import org.odk.collect.android.logic.InstanceProviderBean;
 import org.odk.collect.android.preferences.PreferencesActivity;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -201,7 +201,7 @@ public class InstanceUploaderList extends ListActivity implements
 		});
 		mToggleButton.setOnLongClickListener(this);
 
-        ArrayList<InstanceProvider> list = getUnsentData();
+        ArrayList<InstanceProviderBean> list = getUnsentData();
 
         // render total instance view
         mInstances = new TwoItemChoiceAdapter(InstanceUploaderList.this,
@@ -234,14 +234,14 @@ public class InstanceUploaderList extends ListActivity implements
 		}
 	}
 
-    private ArrayList<InstanceProvider> getAllData() {
-        ArrayList<InstanceProvider> formList = new ArrayList<InstanceProvider>();
+    private ArrayList<InstanceProviderBean> getAllData() {
+        ArrayList<InstanceProviderBean> formList = new ArrayList<InstanceProviderBean>();
         Cursor cursor = getAllCursor();
 
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                InstanceProvider form = new InstanceProvider();
+                InstanceProviderBean form = new InstanceProviderBean();
                 form.setTitle(cursor.getString(0));
                 form.setReference(cursor.getString(1));
                 form.setSubtext(cursor.getString(2));
@@ -255,14 +255,14 @@ public class InstanceUploaderList extends ListActivity implements
         return formList;
     }
 
-    private ArrayList<InstanceProvider> getUnsentData() {
-        ArrayList<InstanceProvider> formList = new ArrayList<InstanceProvider>();
+    private ArrayList<InstanceProviderBean> getUnsentData() {
+        ArrayList<InstanceProviderBean> formList = new ArrayList<InstanceProviderBean>();
         Cursor cursor = getUnsentCursor();
 
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                InstanceProvider form = new InstanceProvider();
+                InstanceProviderBean form = new InstanceProviderBean();
                 form.setTitle(cursor.getString(0));
                 form.setReference(cursor.getString(1));
                 form.setSubtext(cursor.getString(2));
@@ -344,7 +344,7 @@ public class InstanceUploaderList extends ListActivity implements
 		super.onListItemClick(l, v, position, id);
 
         // get row id
-        InstanceProvider instanceProvider = (InstanceProvider) getListAdapter().getItem(position);
+        InstanceProviderBean instanceProvider = (InstanceProviderBean) getListAdapter().getItem(position);
         long k = instanceProvider.getId();
 
 		Collect.getInstance().getActivityLogger()
@@ -408,7 +408,7 @@ public class InstanceUploaderList extends ListActivity implements
 	private void showUnsent() {
 	    Log.d(t, "Showing unsent forms in the list");
 		mShowUnsent = true;
-		List<InstanceProvider> list = getUnsentData();
+		List<InstanceProviderBean> list = getUnsentData();
         mInstances.clear();
         mInstances.addAll(list);
         mInstances.notifyDataSetChanged();
@@ -418,7 +418,7 @@ public class InstanceUploaderList extends ListActivity implements
 	private void showAll() {
 	    Log.d(t, "Showing all (sent and unsent) forms in the list");
         mShowUnsent = false;
-        List<InstanceProvider> list = getAllData();
+        List<InstanceProviderBean> list = getAllData();
         mInstances.clear();
         mInstances.addAll(list);
         mInstances.notifyDataSetChanged();

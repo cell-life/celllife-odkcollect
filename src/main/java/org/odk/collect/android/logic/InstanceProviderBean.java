@@ -3,7 +3,7 @@ package org.odk.collect.android.logic;
 /**
  * A Java bean that is used in conjunction with the TwoItemChoiceAdapter to show instance data in a list format.
  */
-public class InstanceProvider {
+public class InstanceProviderBean {
 
     private long id;
     private String title;
@@ -73,7 +73,7 @@ public class InstanceProvider {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        InstanceProvider other = (InstanceProvider) obj;
+        InstanceProviderBean other = (InstanceProviderBean) obj;
         if (id != other.id)
             return false;
         return true;
