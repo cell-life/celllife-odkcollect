@@ -117,9 +117,8 @@ public class MainMenuActivity extends Activity {
 
 		{
 			// dynamically construct the "ODK Collect vA.B" string
-			TextView mainMenuMessageLabel = (TextView) findViewById(R.id.main_menu_header);
-			mainMenuMessageLabel.setText(Collect.getInstance()
-					.getVersionedAppName());
+			TextView versionTextLabel = (TextView) findViewById(R.id.version_text);
+			versionTextLabel.setText(Collect.getInstance().getVersionText());
 		}
 
 		setTitle(getString(R.string.app_name) + " > "

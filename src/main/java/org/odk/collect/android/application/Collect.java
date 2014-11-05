@@ -101,7 +101,7 @@ public class Collect extends Application {
         return questionFontsize;
     }
 
-    public String getVersionedAppName() {
+    public String getVersionText() {
         String versionDetail = "";
         try {
             PackageInfo pinfo;
@@ -113,7 +113,7 @@ public class Collect extends Application {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        return getString(R.string.app_name) + versionDetail;
+        return versionDetail;
     }
 
     /**
