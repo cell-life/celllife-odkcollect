@@ -18,34 +18,16 @@
     android:layout_marginTop="0dp"
     android:orientation="vertical"
     android:padding="0dp" >
-
-    <RelativeLayout
+	
+    <TextView
+        android:id="@+id/main_menu_header"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_gravity="center" >
-	
-	    <TextView
-	        android:id="@+id/main_menu_header"
-	        android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
-	        android:gravity="center"
-	        android:paddingTop="6dp"
-	        android:text="@string/app_name"
-	        android:textSize="21sp"
-	        android:textStyle="bold"
-	        android:layout_toRightOf="@+id/logo" />
-
-	    <ImageView
-	        android:id="@+id/logo"
-	        android:contentDescription="@string/app_name"
-	        android:layout_width="38dp"
-	        android:layout_height="42dp"
-	        android:layout_alignParentLeft="true"
-	        android:layout_marginLeft="10dp"
-	        android:src="@drawable/logo" />
-	    
-	</RelativeLayout>
+        android:paddingTop="6dp"
+        android:text="@string/app_name"
+        android:textSize="21sp"
+        android:textStyle="bold" />
 	
     <TextView
         android:id="@+id/version_text"
